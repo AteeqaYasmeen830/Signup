@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'HomePage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
+import 'Homepage.dart';
 import 'SignUp.dart';
 
 class LoginPage extends StatefulWidget {
@@ -31,23 +32,40 @@ class _LoginPageState extends State<LoginPage> {
           password: password,
         );
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomePage(userEmail: userCredential.user?.email ?? 'Unknown User'),
-          ),
-        );
-      } on FirebaseAuthException catch (e) {
+        if (!userCredential.user!.emailVerified) {
+          await userCredential.user!.sendEmailVerification();
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: Text("Email Verification Required"),
+              content: Text("A verification email has been sent. Please verify your email."),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text("OK"),
+                ),
+              ],
+            ),
+          );
+        } else {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString("email", email);
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(userEmail: email),
+            ),
+          );
+        }
+      } catch (e) {
         setState(() {
-          if (e.code == 'user-not-found') {
-            emailError = "No user found for this email.";
-          } else if (e.code == 'wrong-password') {
-            passwordError = "Incorrect password.";
-          }
+          emailError = "Login failed. Please check your credentials.";
         });
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

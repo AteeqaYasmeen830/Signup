@@ -1,10 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
-
 
 class HomePage extends StatelessWidget {
   final String userEmail;
+
   const HomePage({required this.userEmail});
 
   @override
